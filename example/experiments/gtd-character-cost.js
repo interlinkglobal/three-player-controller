@@ -197,7 +197,7 @@ export function mountGtdCharacterCostProbe({ renderer, player, footIK, model, an
         return result;
     }
 
-    function tick({ frameAt, afterUpdateAt, afterRenderAt, drawCalls, triangles }) {
+    function tick({ frameAt, afterUpdateAt, renderStartAt, afterRenderAt, drawCalls, triangles }) {
         if (!active) return;
         const run = active;
         const elapsed = afterRenderAt - run.startedAt;
@@ -218,7 +218,7 @@ export function mountGtdCharacterCostProbe({ renderer, player, footIK, model, an
             if (interval > 50) run.longFramesOver50Ms++;
         }
         run.updateCpuMs.push(Math.max(0, afterUpdateAt - frameAt));
-        run.renderSubmissionCpuMs.push(Math.max(0, afterRenderAt - afterUpdateAt));
+        run.renderSubmissionCpuMs.push(Math.max(0, afterRenderAt - renderStartAt));
         run.totalFrameWorkCpuMs.push(Math.max(0, afterRenderAt - frameAt));
         run.sceneDrawCalls.push(drawCalls);
         run.sceneTriangles.push(triangles);
