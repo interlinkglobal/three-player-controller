@@ -36,6 +36,7 @@ let gui;
 let footIKDebugParams;
 let writePelvisOffsetController;
 let stats;
+let gtdCharacterProbe = null; // Optional, fully isolated evidence collection.
 let leftMouseSlowMotion = false;
 let rightMouseSlowMotion = false;
 let savedPlayerTimeScale = 1;
@@ -183,6 +184,16 @@ async function init() {
         straightPoleEnabled: true,
     });
     player.use(footIK);
+
+    // Experiment only. The normal demo and its character stay unchanged.
+    if (new URLSearchParams(location.search).get("gtdCharProbe") === "1") {
+        const { mountGtdCharacterCostProbe } = await import("./experiments/gtd-character-cost.js");
+        gtdCharacterProbe = mountGtdCharacterCostProbe({
+            renderer, player, footIK,
+            model: playerGltf.scene,
+            animations: playerGltf.animations,
+        });
+    }
 
     createDebugPanel();
 
@@ -517,13 +528,24 @@ function enableModelShadows(root) {
 
 // 每帧调用
 function animate() {
+    const frameAt = gtdCharacterProbe ? performance.now() : 0;
     if (player) {
         player.update();
     } else {
         controls.update();
     }
+    const afterUpdateAt = gtdCharacterProbe ? performance.now() : 0;
     updateFootIKDebugPanel();
+    const renderStartAt = gtdCharacterProbe ? performance.now() : 0;
     renderer.render(scene, camera);
+    if (gtdCharacterProbe) {
+        gtdCharacterProbe.record({
+            frameAt, afterUpdateAt, renderStartAt,
+            afterRenderAt: performance.now(),
+            drawCalls: renderer.info.render.calls,
+            triangles: renderer.info.render.triangles,
+        });
+    }
     stats?.update();
 }
 
